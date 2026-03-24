@@ -25,12 +25,7 @@ pip install ucloud-sdk-python3 PyYAML paramiko
 ### 配置文件
 在使用前，需要在Skill目录下创建配置文件 `assets/config.yaml`：
 
-1. 复制配置模板：
-```bash
-cp assets/config.yaml.example assets/config.yaml
-```
-
-2. 编辑配置文件，填入API凭证：
+1. 编辑配置文件，填入API凭证：
 ```yaml
 compshare:
   public_key: "your-public-key"
@@ -40,12 +35,12 @@ compshare:
   base_url: "https://api.compshare.cn"
 ```
 
-3. 获取API凭证：
+2. 获取API凭证：
    - 登录 CompShare 控制台：https://console.compshare.cn/
    - 进入「API管理」页面：https://console.compshare.cn/uaccount/api_manage
    - 创建并获取 `public_key` 和 `private_key`
 
-4. 配置文件查找优先级：
+3. 配置文件查找优先级：
    - 命令行参数 `--config` 指定的路径
    - 默认路径 `assets/config.yaml`（Skill目录下）
 
