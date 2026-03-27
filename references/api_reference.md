@@ -46,25 +46,89 @@ compshare:
 
 ---
 
-## 公共参数
+# CompShare API与Python SDK开发文档
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Region | string | 是 | 地域，固定为 `cn-wlcb` |
-| Zone | string | 是 | 可用区，固定为 `cn-wlcb-01` |
-| ProjectId | string | 否 | 项目ID，不填写为默认项目 |
+本文档整理了优云智算 CompShare 平台的核心 API 接口说明，以及配套的 Python SDK 开发示例，帮助开发者快速接入平台，实现 GPU 实例的全生命周期管理。
 
 ---
 
-## API接口详情
+## 目录
 
-### 1. 创建GPU实例 - CreateCompShareInstance
+1. [Python SDK 快速开始](#python-sdk快速开始)
 
-创建一台新的GPU云服务器实例。
+2. [API 接口文档](#api接口文档)
+
+    - [创建 GPU 资源 - CreateCompShareInstance](#创建gpu资源-createcompshareinstance)
+
+    - [获取实例资源列表 - DescribeCompShareInstance](#获取实例资源列表-describecompshareinstance)
+
+    - [获取自制镜像列表 - DescribeCustomImages](#获取自制镜像列表-describecustomimages)
+
+    - [重启实例 - RebootCompShareInstance](#重启实例-rebootcompshareinstance)
+
+    - [重装实例 - ReinstallCompShareInstance](#重装实例-reinstallcompshareinstance)
+
+    - [重置实例密码 - ResetCompShareInstancePassword](#重置实例密码-resetcompshareinstancepassword)
+
+    - [启动实例 - StartCompShareInstance](#启动实例-startcompshareinstance)
+
+    - [关闭实例 - StopCompShareInstance](#关闭实例-stopcompshareinstance)
+
+    - [删除实例 - TerminateCompShareInstance](#删除实例-terminatecompshareinstance)
+
+---
+
+## Python SDK 快速开始
+
+### 环境准备
+
+官方提供了 Python3 版本的 SDK 示例，可通过以下步骤快速运行：
+
+1. **安装 SDK**
+
+```bash
+
+pip install --upgrade ucloud-sdk-python3
+```
+
+1. **配置示例代码**
+
+    - 编辑示例代码文件 `main.py`
+
+    - 填写您的 `public_key` 和 `private_key` 密钥信息
+
+    - 根据您的需求调整其他参数，例如镜像 ID `CompShareImageId` 等
+
+2. **运行示例**
+
+```bash
+
+python main.py
+```
+
+### 示例文件说明
+
+该示例仓库包含以下核心文件：
+
+|文件|说明|
+|---|---|
+|`.gitignore`|Git 忽略配置|
+|`README.md`|示例说明文档|
+|`main.py`|完整的 Python SDK 调用示例代码|
+---
+
+## API 接口文档
+
+所有 API 均通过 HTTPS 调用，请求地址统一为：`https://api.compshare.cn/`
+
+---
+
+### 创建 GPU 资源 - CreateCompShareInstance
+
+**接口说明**：创建优云智算平台 GPU 实例资源
 
 #### 请求参数
 
-# 云主机创建参数说明表
 | 参数名称 | 类型 | 描述 | 是否必填 |
 | --- | --- | --- | --- |
 | Region | string | 可用地域，枚举值：cn-wlcb（华北二A）、cn-sh2（上海二） | 是 |
@@ -86,56 +150,82 @@ compshare:
 | Password | string | 云主机密码，需按规范设置并进行base64编码 | 否 |
 | Name | string | 实例名称 | 否 |
 | SecurityGroupId | string | 防火墙ID | 否 |
-
 #### 响应参数
 
-| 参数名 | 类型 | 说明 |
-|--------|------|------|
-| RetCode | int | 返回码，0表示成功 |
-| Action | string | 操作名称 |
-| UHostIds | array | 实例ID集合 |
-| IPs | array | 分配的IP地址集合 |
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|RetCode|int|返回码|Yes|
+|Action|string|操作名称|Yes|
+|UHostIds|array|UHost 实例 Id 集合|Yes|
+#### 请求示例
 
-#### 使用示例
+```Plain Text
 
-```bash
-# 使用命令行脚本
-python scripts/compshare_client.py create \
-  --gpu-type 4090 \
-  --gpu-count 1 \
-  --cpu 16 \
-  --memory 64 \
-  --disk-size 200 \
-  --name "my-gpu-instance"
+https://api.compshare.cn/?Action=CreateCompShareInstance
+&Region=cn-zj
+&Zone=cn-zj-01
+&ProjectId=lnUhAYpT
+&ImageId=KSuPKTtW
+&LoginMode=dnnfRljU
+&Disks.N.IsBoot=true
+&Disks.N.Type=ptHJPOco
+&Disks.N.Size=5
+&MachineType=iyENElDv
+&GPUType=pzRkInee
+&GPU=VkyjzhQy
+&ChargeType=USDhlfAP
+&Quantity=7
+&MinimalCpuPlatform=QErLvHVg
+&Memory=1
+&MaxCount=6
+&Password=UwOdhzOu
+&CPU=1
+&Name=ACsfjhFW
+&SecurityGroupId=DhXQhVSq
+```
+
+#### 响应示例
+
+```json
+
+{
+"Action": "CreateCompShareInstanceResponse",
+"IPs": [
+"hhySlhCv"
+],
+"RetCode": 0,
+"UHostIds": [
+"NIdfqvRv"
+]
+}
 ```
 
 ---
 
-### 2. 查询实例列表 - DescribeCompShareInstance
+### 获取实例资源列表 - DescribeCompShareInstance
 
-获取用户所有或指定的GPU实例信息列表。
+**接口说明**：获取用户所有地域下实例资源信息列表
 
 #### 请求参数
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Region | string | 否 | 地域 |
-| Zone | string | 否 | 可用区 |
-| UHostIds.N | array | 否 | 实例ID数组，不传则返回所有 |
-| Offset | int | 否 | 列表起始位置偏移量，默认0 |
-| Limit | int | 否 | 返回数据长度，默认20，最大100 |
-
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Region|string|地域。 cn-wlcb|No|
+|Zone|string|可用区。cn-wlcb-01|No|
+|ProjectId|string|项目 ID。不填写为默认项目，子帐号必须填写。 请参考 GetProjectList 接口|No|
+|UHostIds.N|string|【数组】UHost 主机的资源 ID，例如 UHostIds.0 代表希望获取信息 的主机 1，UHostIds.1 代表主机 2。 如果不传入，则返回当前 Region 所有符合条件的 UHost 实例。|No|
+|Offset|int|列表起始位置偏移量，默认为 0|No|
+|Limit|int|返回数据长度，默认为 20，最大 100|No|
 #### 响应参数
 
-| 参数名 | 类型 | 说明 |
-|--------|------|------|
-| RetCode | int | 返回码 |
-| Action | string | 操作名称 |
-| TotalCount | int | 实例总数 |
-| UHostSet | array | 实例详情列表 |
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|RetCode|int|返回码|**Yes**|
+|Action|string|操作名称|**Yes**|
+|TotalCount|int|UHostInstance 总数|**Yes**|
+|UHostSet|array|云主机实例列表，每项参数可见下面 CompShareInstanceSet|**Yes**|
+##### CompShareInstanceSet 实例详情
 
-#### 实例详情字段 (UHostSet)
-# 云主机实例查询返回参数表
 | 参数名称 | 类型 | 描述 | 是否必填 |
 | --- | --- | --- | --- |
 | Zone | string | 可用区 | 否 |
@@ -184,184 +274,540 @@ python scripts/compshare_client.py create \
 | PostPayShutdown | bool | 【内部API返回】后付费关机 | 否 |
 | SupportWithoutGpuStart | bool | 此实例是否支持无卡开机 | 否 |
 | WithoutGpuSpec | object | 无卡配置规格，详见 WithoutGpuSpecInfo | 否 |
+##### GraphicsMemory 显存信息
 
-#### 使用示例
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Value|int|值，单位是 GB|No|
+|Rate|int|交互展示参数，可忽略|No|
+##### UHostDiskSet 磁盘信息
 
-```bash
-# 查询所有实例
-python scripts/compshare_client.py list
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|DiskType|string|磁盘类型。请参考磁盘类型|**Yes**|
+|IsBoot|string|是否是系统盘。枚举值：True，是系统盘；False，是数据盘（默认）。Disks 数组中有且只能有一块盘是系统盘。|**Yes**|
+|Encrypted|string|"true": 加密盘 "false"：非加密盘|No|
+|Type|string|【建议不再使用】磁盘类型。系统盘: Boot，数据盘: Data, 网络盘：Udisk|No|
+|DiskId|string|磁盘 ID|No|
+|Name|string|UDisk 名字（仅当磁盘是 UDisk 时返回）|No|
+|Drive|string|磁盘盘符|No|
+|Size|int|磁盘大小，单位: GB|No|
+|BackupType|string|备份方案。若开通了数据方舟，则为 DATAARK|No|
+##### UHostIPSet IP 信息
 
-# 查询指定实例
-python scripts/compshare_client.py list --instance-ids "uhost-xxxxx"
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|IPMode|string|IPv4/IPv6；|**Yes**|
+|Default|string|内网 Private 类型下，表示是否为默认网卡。true: 是默认网卡；其他值：不是。|No|
+|Mac|string|内网 Private 类型下，当前网卡的 Mac。|No|
+|Weight|int|当前 EIP 的权重。权重最大的为当前的出口 IP。|No|
+|Type|string|国际: Internation，BGP: Bgp，内网: Private|No|
+|IPId|string|外网 IP 资源 ID 。(内网 IP 无对应的资源 ID)|No|
+|IP|string|IP 地址|No|
+|Bandwidth|int|IP 对应的带宽，单位: Mb (内网 IP 不显示带宽信息)|No|
+|VPCId|string|IP 地址对应的 VPC ID。（北京一不支持，字段返回为空）|No|
+|SubnetId|string|IP 地址对应的子网 ID。（北京一不支持，字段返回为空）|No|
+|NetworkInterfaceId|string|弹性网卡为默认网卡时，返回对应的 ID 值|No|
+##### WithoutGpuSpec 无卡配置
+
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Cpu|int|cpu|No|
+|Memory|int|内存|No|
+|Gpu|int|gpu|No|
+#### 请求示例
+
+```Plain Text
+
+https://api.compshare.cn/?Action=DescribeCompShareInstance
+&Region=cn-zj
+&Zone=cn-zj-01
+&ProjectId=IoMVpdoj
+&UHostIds.N=cnHQCXgZ
+&Tag=iDnowauu
+&Offset=2
+&Limit=9
+&VPCId=YVTTNJzc
+&SubnetId=xsDQoSws
+&NoEIP=false
+&ResourceType=zFIXncgL
+&UDiskIdForAttachment=true
+&WithoutGpu=false
+```
+
+#### 响应示例
+
+```json
+
+{
+"Action": "DescribeCompShareInstanceResponse",
+"TotalCount": 8,
+"UHostSet": [
+{
+"RestrictMode": "VTendLlO",
+"Zone": "xdLgDoph",
+"OsName": "gMqlgBlI",
+"HostType": "jpATaXsk",
+"SecGroupInstance": false,
+"State": "TnNuGSYE",
+"Memory": 6,
+"HotPlugMaxCpu": 8,
+"NetCapability": "kTFrfCiG",
+"BootDiskState": "wfcQeKzE",
+"CPU": 5,
+"BasicImageName": "fFSjyQry",
+"SpotAttribute": {},
+"IPv6Feature": false,
+"IPSet": [
+{
+"VPCId": "ASpSKtze",
+"Weight": 8,
+"Default": "tgnSjelJ",
+"IP": "ZmBtTbhB",
+"NetworkInterfaceId": "FauzdzHm",
+"IPMode": "UulHwAYv",
+"Bandwidth": 8,
+"SubnetId": "SYfTyiiN",
+"Mac": "ACuDMaqD",
+"IPId": "subuipxK",
+"Type": "XtwAFLux"
+}
+],
+"HpcFeature": true,
+"ImageId": "rOLrvehW",
+"AutoRenew": "KHTdKhxO",
+"UDHostAttribute": {},
+"TotalDiskSpace": 6,
+"OsType": "uTGzcPdd",
+"SubnetType": "sDBMGbYE",
+"CloudInitFeature": false,
+"Remark": "zATjHVlb",
+"Name": "pkIdkUfV",
+"EpcInstance": true,
+"IsolationGroup": "dMNyStGT",
+"KeyPair": {},
+"UHostId": "wMwHWPOr",
+"GPU": 1,
+"LifeCycle": "SwXCLmkq",
+"CpuPlatform": "aKtmIaxl",
+"MachineType": "IqVoJXvL",
+"HiddenKvm": false,
+"StorageType": "FEFUzaYx",
+"HotplugFeature": false,
+"UHostType": "NwCllZUf",
+"BasicImageId": "AFGqwjpj",
+"ExpireTime": 4,
+"Tag": "MHPHAgpt",
+"GpuType": "syCegFMi",
+"NetworkState": "FcaxZMik",
+"ChargeType": "xePQZDOs",
+"RdmaClusterId": "ncMkxiOT",
+"CreateTime": 7,
+"TimemachineFeature": "GiqxwKD"
+}
+],
+"RetCode": 0
+}
 ```
 
 ---
 
-### 3. 启动实例 - StartCompShareInstance
+### 获取自制镜像列表 - DescribeCustomImages
 
-启动已关机的GPU实例。
+**接口说明**：获取用户的自制镜像列表信息
 
 #### 请求参数
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Region | string | 是 | 地域 |
-| Zone | string | 是 | 可用区 |
-| UHostId | string | 是 | 实例ID |
-| WithoutGpu | bool | 否 | 是否无卡启动，默认False |
-
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Region|string|地域。 参见 地域和可用区列表|**Yes**|
+|Zone|string|可用区。参见 可用区列表|**Yes**|
+|ProjectId|string|项目 ID。不填写为默认项目，子帐号必须填写。 请参考 GetProjectList 接口|No|
+|CompShareImageId|string|指定镜像 Id 查询|No|
+|Offset|int|列表起始位置偏移量，默认为 0|No|
+|Limit|int|返回数据长度，默认为 20，最大 100|No|
 #### 响应参数
 
-| 参数名 | 类型 | 说明 |
-|--------|------|------|
-| RetCode | int | 返回码 |
-| Action | string | 操作名称 |
-| UHostId | string | 实例ID |
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|RetCode|int|返回码|**Yes**|
+|Action|string|操作名称|**Yes**|
+|ImageSet|array|镜像详情信息|**Yes**|
+|TotalCount|int|总数量|No|
+##### CompShareImage 镜像详情
 
-#### 启动模式说明
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|CompShareImageId|string|镜像 Id|No|
+|Name|string|镜像名称|No|
+|Author|string|镜像作者昵称|No|
+|AuthInfo|int|镜像作者认证信息|No|
+|ImageOwnerAlias|string|镜像来源。- Official 平台镜像；- Community 社区镜像|No|
+|ImageType|string|镜像类型。- System 平台提供的公共镜像；- App 平台提供的应用镜像；- Custom 自制镜像；- Community 社区镜像|No|
+|IsOfficial|bool|来源是否为官方镜像【仅自制镜像信息返回该字段】|No|
+|Container|string|是否为容器镜像。- True 容器镜像 - False 虚机镜像|No|
+|Status|string|镜像状态。- Making 制作中；- Available 可用；- UnAvailable 不可用；- Reviewing 审核中；- Offline 已下线|No|
+|Size|int|镜像大小。单位 MB|No|
+|Visibility|int|可见性。0：私密镜像；1：公开至镜像社区|No|
+|Description|string|镜像描述信息|No|
+|Tags|array|【array of string】镜像标签|No|
+|Price|float|镜像价格。单位：元|No|
+|Cover|string|镜像封面 URL|No|
+|Readme|string|镜像详细描述。仅指定镜像 Id 查询时返回|No|
+|Softwares|object|镜像软件信息|No|
+|CreatedCount|int|镜像引用创建计数|No|
+|FavoritesCount|int|镜像收藏计数|No|
+|FailedReason|string|镜像制作失败错误原因|No|
+|CreateTime|int|创建时间戳|No|
+|PubTime|int|发布时间戳|No|
+|Owner|object|镜像所属账号信息|No|
+|GroupId|string|镜像组 id|No|
+|VersionName|string|版本名称|No|
+|VersionDesc|string|版本描述|No|
+|SourceGpuType|string|自制镜像来源机型|No|
+|AutoStart|bool|是否支持自启动 default:false|No|
+|ImageCharge|bool|是否镜像收费 default: false|No|
+|ImageUseTime|int|镜像使用时长|No|
+##### Software 软件信息
 
-| 模式 | 参数 | 说明 |
-|------|------|------|
-| 正常开机 | WithoutGpu=False 或不传 | GPU正常加载，正常计费 |
-| 无卡开机 | WithoutGpu=True | GPU不加载，节省费用 |
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Framework|string|框架名称|No|
+|FrameworkVersion|string|框架版本|No|
+|CUDAVersion|string|CUDA 版本|No|
+|Applications|array|【array of string】应用列表|No|
+##### Owner 所属账号信息
 
-#### 使用示例
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|AccountName|string|账号昵称|No|
+|AccountId|string|账号 Id|No|
+#### 请求示例
 
-```bash
-# 正常开机（带GPU）
-python scripts/compshare_client.py start --instance-id uhost-xxxxx
+```Plain Text
 
-# 无卡开机（不带GPU，节省费用）
-python scripts/compshare_client.py start --instance-id uhost-xxxxx --without-gpu
+https://api.ucloud.cn/?Action=DescribeCompShareCustomImages
+&Region=cn-zj
+&Zone=cn-zj-01
+&ProjectId=GSIKgudm
+&CompShareImageId=ECyEnJbe
+&Offset=2
+&Limit=2
+```
+
+#### 响应示例
+
+```json
+
+{
+"Action": "DescribeCompShareCustomImagesResponse",
+"ImageSet": [
+{
+"Status": "hlqtbVJG",
+"Name": "nFmURawE",
+"Author": "CpKmKtmy",
+"CreatedCount": "DQIOscsN",
+"CompShareImageId": "hjNwBATq",
+"Tags": [
+"PbbXTujk"
+],
+"Cover": "PFuhwZhm",
+"Visibility": 2,
+"CreateTime": "IFXxRGPj",
+"AuthInfo": 6,
+"FavoritesCount": "hnuFiuwm",
+"ImageOwnerAlias": "xWXjOYVE",
+"Readme": "ufXKfxWg",
+"Description": "yXiGjmEh",
+"PubTime": "kkupHyrZ",
+"Price": 9.99592,
+"ImageType": "AeSmLeoE",
+"Size": 4
+}
+],
+"RetCode": 0,
+"TotalCount": 4
+}
 ```
 
 ---
 
-### 4. 停止实例 - StopCompShareInstance
+### 重启实例 - RebootCompShareInstance
 
-关闭运行中的GPU实例。
+**接口说明**：重启优云智算平台实例
 
 #### 请求参数
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Region | string | 是 | 地域 |
-| Zone | string | 是 | 可用区 |
-| UHostId | string | 是 | 实例ID |
-
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Region|string|地域。 cn-wlcb|**Yes**|
+|Zone|string|可用区。cn-wlcb-01|**Yes**|
+|ProjectId|string|项目 ID。不填写为默认项目，子帐号必须填写。 请参考 GetProjectList 接口|No|
+|UHostId|string|实例 Id|**Yes**|
 #### 响应参数
 
-| 参数名 | 类型 | 说明 |
-|--------|------|------|
-| RetCode | int | 返回码 |
-| Action | string | 操作名称 |
-| UHostId | string | 实例ID |
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|RetCode|int|返回码|**Yes**|
+|Action|string|操作名称|**Yes**|
+|UHostId|string|实例 Id|**Yes**|
+#### 请求示例
 
-#### 使用示例
+```Plain Text
 
-```bash
-python scripts/compshare_client.py stop --instance-id uhost-xxxxx
+https://api.compshare.cn/?Action=RebootCompShareInstance
+&Region=cn-zj
+&Zone=cn-zj-01
+&ProjectId=IjGiyTeV
+&UHostId=GYaCFELy
+```
+
+#### 响应示例
+
+```json
+
+{
+"Action": "RebootCompShareInstanceResponse",
+"UHostId": "FprxeYMp",
+"RetCode": 0
+}
 ```
 
 ---
 
-### 5. 重启实例 - RebootCompShareInstance
+### 重装实例 - ReinstallCompShareInstance
 
-重启运行中的GPU实例。
+**接口说明**：重装优云智算平台实例，可更换系统镜像
 
 #### 请求参数
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Region | string | 是 | 地域 |
-| Zone | string | 是 | 可用区 |
-| UHostId | string | 是 | 实例ID |
-
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Region|string|地域。 cn-wlcb|**Yes**|
+|Zone|string|可用区。cn-wlcb-01|**Yes**|
+|ProjectId|string|项目 ID。不填写为默认项目，子帐号必须填写。 请参考 GetProjectList 接口|No|
+|UHostId|string|实例 Id|**Yes**|
+|CompShareImageId|string|镜像 Id|**Yes**|
+|Password|string|实例的新密码|No|
 #### 响应参数
 
-| 参数名 | 类型 | 说明 |
-|--------|------|------|
-| RetCode | int | 返回码 |
-| Action | string | 操作名称 |
-| UHostId | string | 实例ID |
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|RetCode|int|返回码|**Yes**|
+|Action|string|操作名称|**Yes**|
+|UHostId|string|实例 Id|**Yes**|
+#### 请求示例
 
-#### 使用示例
+```Plain Text
 
-```bash
-python scripts/compshare_client.py reboot --instance-id uhost-xxxxx
+https://api.compshare.cn/?Action=ReinstallCompShareInstance
+&Region=cn-zj
+&Zone=cn-zj-01
+&ProjectId=vQBurWEY
+&UHostId=YNAiIZEC
+&CompShareImageId=lXjZDcTq
+&Password=FtKctudQ
+```
+
+#### 响应示例
+
+```json
+
+{
+"Action": "ReinstallCompShareInstanceResponse",
+"UHostId": "YHksHalJ",
+"RetCode": 0
+}
 ```
 
 ---
 
-### 6. 重置实例密码 - ResetCompShareInstancePassword
+### 重置实例密码 - ResetCompShareInstancePassword
 
-重置GPU实例的登录密码。
+**接口说明**：重置优云智算平台实例的登录密码
 
 #### 请求参数
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Region | string | 是 | 地域 |
-| Zone | string | 是 | 可用区 |
-| UHostId | string | 是 | 实例ID |
-| Password | string | 是 | 新密码，需base64编码 |
-
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Region|string|地域。 cn-wlcb|**Yes**|
+|Zone|string|可用区。cn-wlcb-01|**Yes**|
+|ProjectId|string|项目 ID。不填写为默认项目，子帐号必须填写。 请参考 GetProjectList 接口|No|
+|UHostId|string|实例 Id|**Yes**|
+|Password|string|新密码。需经 Base64 编码|**Yes**|
 #### 响应参数
 
-| 参数名 | 类型 | 说明 |
-|--------|------|------|
-| RetCode | int | 返回码 |
-| Action | string | 操作名称 |
-| UHostId | string | 实例ID |
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|RetCode|int|返回码|**Yes**|
+|Action|string|操作名称|**Yes**|
+|UHostId|string|实例 Id|**Yes**|
+#### 请求示例
 
-#### 密码规范
-- 长度: 8-30个字符
-- 必须包含: 大写字母、小写字母、数字、特殊字符中的至少三种
-- 特殊字符: `!@#$%^&*()_+-=`
+```Plain Text
 
-#### 使用示例
+https://api.compshare.cn/?Action=ResetCompShareInstancePassword
+&Region=cn-zj
+&Zone=cn-zj-01
+&ProjectId=bPGMZwvY
+&UHostId=FawcbRha
+&Password=ctmwOSIg
+```
 
-```bash
-python scripts/compshare_client.py reset-password \
-  --instance-id uhost-xxxxx \
-  --password "NewPassword123!"
+#### 响应示例
+
+```json
+
+{
+"Action": "ResetCompShareInstancePasswordResponse",
+"UHostId": "VigQIiTv",
+"RetCode": 0
+}
 ```
 
 ---
 
-### 7. 删除实例 - TerminateCompShareInstance
+### 启动实例 - StartCompShareInstance
 
-删除GPU实例。
-
-**重要**: 删除前必须先停止实例！
+**接口说明**：启动已关机的优云智算平台实例
 
 #### 请求参数
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Region | string | 是 | 地域 |
-| Zone | string | 是 | 可用区 |
-| UHostId | string | 是 | 实例ID |
-
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Region|string|地域。 cn-wlcb|**Yes**|
+|Zone|string|可用区。cn-wlcb-01|**Yes**|
+|ProjectId|string|项目 ID。不填写为默认项目，子帐号必须填写。 请参考 GetProjectList 接口|No|
+|UHostId|string|实例 Id|**Yes**|
+|WithoutGpu|bool|是否进行无卡开机|No|
 #### 响应参数
 
-| 参数名 | 类型 | 说明 |
-|--------|------|------|
-| RetCode | int | 返回码 |
-| Action | string | 操作名称 |
-| UHostId | string | 实例ID |
-| InRecycle | string | 是否进入回收站 |
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|RetCode|int|返回码|**Yes**|
+|Action|string|操作名称|**Yes**|
+|UHostId|string|实例 Id|**Yes**|
+#### 请求示例
 
-#### 使用示例
+```Plain Text
 
-```bash
-# 1. 先停止实例
-python scripts/compshare_client.py stop --instance-id uhost-xxxxx
-
-# 2. 等待实例停止后删除
-python scripts/compshare_client.py delete --instance-id uhost-xxxxx
+https://api.compshare.cn/?Action=StartCompShareInstance
+&Region=cn-zj
+&Zone=cn-zj-01
+&ProjectId=cEMGtAkM
+&UHostId=NHNZFdXi
+&WithoutGpu=false
 ```
 
+#### 响应示例
+
+```json
+
+{
+"Action": "StartCompShareInstanceResponse",
+"UHostId": "jkHGryKM",
+"RetCode": 0
+}
+```
+
+---
+
+### 关闭实例 - StopCompShareInstance
+
+**接口说明**：关闭运行中的优云智算平台实例
+
+#### 请求参数
+
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Region|string|地域。 cn-wlcb|**Yes**|
+|Zone|string|可用区。cn-wlcb-01|**Yes**|
+|ProjectId|string|项目 ID。不填写为默认项目，子帐号必须填写。 请参考 GetProjectList 接口|No|
+|UHostId|string|实例 Id|**Yes**|
+#### 响应参数
+
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|RetCode|int|返回码|**Yes**|
+|Action|string|操作名称|**Yes**|
+|UHostId|string|实例 Id|**Yes**|
+#### 请求示例
+
+```Plain Text
+
+https://api.compshare.cn/?Action=StopCompShareInstance
+&Region=cn-zj
+&Zone=cn-zj-01
+&ProjectId=xEOkvEBT
+&UHostId=UpMrYJEe
+```
+
+#### 响应示例
+
+```json
+
+{
+"Action": "StopCompShareInstanceResponse",
+"UHostId": "iKQBDtrH",
+"RetCode": 0
+}
+```
+
+---
+
+### 删除实例 - TerminateCompShareInstance
+
+**接口说明**：删除优云智算平台虚机实例
+
+> **重要提示**
+> 在调用本接口删除实例之前，请务必确认以下事项：
+> 
+> - 实例必须处于关机（Stopped）状态。
+> 
+> - 若实例仍为运行中（Running），调用本接口将会返回错误，删除操作不会被执行。
+> 
+> - 如需关闭实例，请先调用关机接口（`StopCompShareInstance`），待实例状态变为 `Stopped` 后再执行删除操作。
+> 
+> 
+
+#### 请求参数
+
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|Region|string|地域。 cn-wlcb|**Yes**|
+|Zone|string|可用区。cn-wlcb-01|**Yes**|
+|ProjectId|string|项目 ID。不填写为默认项目，子帐号必须填写。 请参考 GetProjectList 接口|No|
+|UHostId|string|虚机资源 id|**Yes**|
+#### 响应参数
+
+|Parameter name|Type|Description|Required|
+|---|---|---|---|
+|RetCode|int|返回码|**Yes**|
+|Action|string|操作名称|**Yes**|
+|UHostId|string|虚机资源 id|**Yes**|
+|InRecycle|string|是否进入回收站|No|
+#### 请求示例
+
+```Plain Text
+
+https://api.compshare.cn/?Action=TerminateCompShareInstance
+&Region=cn-zj
+&Zone=cn-zj-01
+&ProjectId=MmpOcBdp
+&UHostId=LhxmWZes
+```
+
+#### 响应示例
+
+```json
+
+{
+"Action": "TerminateCompShareInstanceResponse",
+"InRecycle": "QKREBgnO",
+"UHostId": "TJYRSKuk",
+"RetCode": 0
+}
+```
 ---
 
 ## SSH客户端使用指南
@@ -498,37 +944,3 @@ python scripts/ssh_client.py shell \
 - 需要下载或整理数据时
 - 暂时不需要GPU但需要保持环境时
 
-### 7. 典型工作流程
-```bash
-# 1. 创建GPU实例
-python scripts/compshare_client.py create --gpu-type 4090 --gpu-count 1 --cpu 16 --memory 64
-
-# 2. 查询实例获取SSH信息
-python scripts/compshare_client.py list
-
-# 3. 上传代码
-python scripts/ssh_client.py upload-dir \
-  --ssh-command "ssh -p xxxxx root@x.x.x.x" \
-  --password "xxx" \
-  --local ./project \
-  --remote /root/project
-
-# 4. 执行训练
-python scripts/ssh_client.py exec \
-  --ssh-command "ssh -p xxxxx root@x.x.x.x" \
-  --password "xxx" \
-  --cmd "cd /root/project && python train.py"
-
-# 5. 下载结果
-python scripts/ssh_client.py download-dir \
-  --ssh-command "ssh -p xxxxx root@x.x.x.x" \
-  --password "xxx" \
-  --remote /root/output \
-  --local ./results
-
-# 6. 停止实例
-python scripts/compshare_client.py stop --instance-id uhost-xxxxx
-
-# 7. 删除实例
-python scripts/compshare_client.py delete --instance-id uhost-xxxxx
-```
