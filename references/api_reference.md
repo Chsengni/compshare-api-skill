@@ -64,23 +64,28 @@ compshare:
 
 #### 请求参数
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Region | string | 是 | 地域: cn-wlcb |
-| Zone | string | 是 | 可用区: cn-wlcb-01 |
-| MachineType | string | 是 | 云主机机型，GPU固定为 `G` |
-| GPU | int | 是 | GPU卡核心数 |
-| GpuType | string | 是 | GPU类型: P40/2080/3090/3080Ti/4090/A800/A100/H20 |
-| CPU | int | 是 | 虚拟CPU核数，范围1-64 |
-| Memory | int | 是 | 内存大小(MB)，范围1024-262144，需为1024的倍数 |
-| CompShareImageId | string | 是 | 镜像ID |
-| Disks.N.IsBoot | bool | 是 | 是否为系统盘，系统盘必须为True |
-| Disks.N.Type | string | 是 | 磁盘类型: CLOUD_SSD |
-| Disks.N.Size | int | 是 | 磁盘大小(GB) |
-| Name | string | 否 | 实例名称 |
-| Password | string | 否 | 登录密码，需base64编码 |
-| ChargeType | string | 否 | 计费模式: Month/Day/Dynamic/Postpay，默认Dynamic |
-| Quantity | int | 否 | 购买时长，月付时为月数 |
+# 云主机创建参数说明表
+| 参数名称 | 类型 | 描述 | 是否必填 |
+| --- | --- | --- | --- |
+| Region | string | 可用地域，枚举值：cn-wlcb（华北二A）、cn-sh2（上海二） | 是 |
+| Zone | string | 可用区，枚举值：cn-wlcb-01（华北二A）、cn-sh2-02（上海二） | 是 |
+| ProjectId | string | 项目ID，不填写则为默认项目 | 否 |
+| Disks.N.IsBoot | bool | 是否为系统盘，枚举值：<br>True：是系统盘<br>False：是数据盘（默认）<br>Disks数组中有且仅有一块系统盘 | 是 |
+| Disks.N.Type | string | 磁盘类型，优云智算磁盘固定为 CLOUD_SSD | 是 |
+| Disks.N.Size | int | 磁盘大小，单位GB，具体参考磁盘类型限制 | 是 |
+| MachineType | string | 云主机机型，默认GPU为["G"]；本字段与UHostType二选一即可，参考云主机机型说明 | 是 |
+| GPU | int | GPU卡核心数，仅GPU机型支持，可选范围与MachineType+GpuType相关 | 是 |
+| Memory | int | 内存大小，单位MB；范围[1024, 262144]，需为1024的倍数；默认值8192 | 是 |
+| CPU | int | 虚拟CPU核数，可选1-64，具体参照机型控制台；默认值4 | 是 |
+| GpuType | string | GPU类型，枚举值：["P40","2080","3090","3080Ti","4090","A800","A100","H20"]；MachineType为G时必填 | 是 |
+| CompShareImageId | string | 镜像ID | 是 |
+| LoginMode | string | 主机登录模式，默认值：Password（密码） | 否 |
+| ChargeType | string | 计费模式，枚举值：<br>Month：按月付费<br>Day：按天付费<br>Dynamic：按小时预付费<br>Postpay：按小时后付费（部分可用区支持，关机不收费）<br>Spot：抢占式实例（内测）<br>默认为月付 | 否 |
+| Quantity | int | 购买时长，默认值1；按小时（Dynamic/Postpay）无需此参数；月付传0代表购买至月末 | 否 |
+| MinimalCpuPlatform | string | 最低CPU平台，枚举值：["Intel/Auto", "Intel/IvyBridge", "Intel/Haswell", "Intel/Broadwell", "Intel/Skylake", "Intel/Cascadelake", "Intel/CascadelakeR", "Intel/IceLake", "Amd/Epyc2", "Amd/Auto","Ampere/Auto","Ampere/Altra"]；默认Intel/Auto | 否 |
+| Password | string | 云主机密码，需按规范设置并进行base64编码 | 否 |
+| Name | string | 实例名称 | 否 |
+| SecurityGroupId | string | 防火墙ID | 否 |
 
 #### 响应参数
 
@@ -130,26 +135,55 @@ python scripts/compshare_client.py create \
 | UHostSet | array | 实例详情列表 |
 
 #### 实例详情字段 (UHostSet)
-
-| 字段名 | 类型 | 说明 |
-|--------|------|------|
-| UHostId | string | 实例ID |
-| Name | string | 实例名称 |
-| State | string | 实例状态: Running/Stopped/Pending |
-| IP | string | 实例IP地址 |
-| Zone | string | 可用区 |
-| MachineType | string | 机型信息 |
-| GPU | int | GPU数量 |
-| GPUType | string | GPU类型 |
-| CPU | int | CPU核数 |
-| Memory | int | 内存大小(MB) |
-| CompShareImageId | string | 镜像ID |
-| CompShareImageName | string | 镜像名称 |
-| ChargeType | string | 计费模式 |
-| CreateTime | int | 创建时间戳 |
-| ExpireTime | int | 到期时间戳 |
-| SshLoginCommand | string | SSH登录命令 |
-| Password | string | 登录密码 |
+# 云主机实例查询返回参数表
+| 参数名称 | 类型 | 描述 | 是否必填 |
+| --- | --- | --- | --- |
+| Zone | string | 可用区 | 否 |
+| UHostId | string | 实例Id | 否 |
+| MachineType | string | 机型信息 | 否 |
+| CpuPlatform | string | CPU平台，如 "Intel/Auto"、"Amd/Auto" 等 | 否 |
+| CompShareImageId | string | 镜像Id | 否 |
+| CompShareImageName | string | 镜像名称 | 否 |
+| CompShareImageOwnerAlias | string | 镜像来源 | 否 |
+| CompShareImageBillId | string | 用于镜像计费的Id | 否 |
+| CompShareImageStatus | string | 镜像状态 | 否 |
+| CompShareImageType | string | 镜像类型：System 系统镜像、App 应用镜像、Custom 自制镜像、Community 社区镜像 | 否 |
+| InstanceType | string | 实例类型："UHost" 普通主机；"Container" 容器主机 | 否 |
+| Password | string | 主机密码，Base64 编码 | 否 |
+| SshLoginCommand | string | SSH 登录命令 | 否 |
+| Name | string | 实例名称 | 否 |
+| Tag | string | 实例业务组 | 否 |
+| Remark | string | 实例备注 | 否 |
+| State | string | 实例状态：Initializing 初始化、Starting 启动中、Running 运行中、Stopping 关机中、Stopped 关机、Install Fail 安装失败、Rebooting 重启中、Resizing 升级改配中、空字符串 未知 | 否 |
+| ChargeType | string | 计费模式：Year 按年、Month 按月、Dynamic 按时、Postpay 按需 | 否 |
+| CPU | int | 虚拟CPU核数，单位：个 | 否 |
+| Memory | string | 内存大小，单位：MB | 否 |
+| GpuType | string | GPU类型，如 "4090" | 否 |
+| GPU | int | GPU个数 | 否 |
+| GraphicsMemory | object | GPU显存信息 | 否 |
+| AutoRenew | string | 是否自动续费：Yes 是，No 否 | 否 |
+| IsExpire | string | 是否过期：Yes 已过期，No 未过期 | 否 |
+| OsName | string | 虚机镜像名称 | 否 |
+| OsType | string | 操作系统类型：Linux / Windows | 否 |
+| TotalDiskSpace | int | 总数据盘存储空间 | 否 |
+| CpuArch | string | CPU架构：x86_64 / i386 等 | 否 |
+| DiskSet | array | 磁盘信息，详见 UHostDiskSet | 否 |
+| IPSet | array | 网络信息，详见 UHostIPSet | 否 |
+| Softwares | array | 软件地址 | 否 |
+| InstancePrice | float | 主机价格 | 否 |
+| CompShareImagePrice | float | 镜像价格 | 否 |
+| ExpireTime | string | 过期时间 | 否 |
+| CreateTime | string | 创建时间 | 否 |
+| SetId | int | 【内部API返回】宿主所在Set Id | 否 |
+| HostIp | string | 【内部API返回】宿主IP | 否 |
+| PodId | string | 【内部API返回】udisk podId | 否 |
+| HugepageCfg | string | 【内部API返回】大页内存 | 否 |
+| QemuVersion | string | 【内部API返回】Qemu版本号 | 否 |
+| QemuFullVersion | string | 【内部API返回】Qemu完整版本号 | 否 |
+| UUID | string | 【内部API返回】资源长Id | 否 |
+| PostPayShutdown | bool | 【内部API返回】后付费关机 | 否 |
+| SupportWithoutGpuStart | bool | 此实例是否支持无卡开机 | 否 |
+| WithoutGpuSpec | object | 无卡配置规格，详见 WithoutGpuSpecInfo | 否 |
 
 #### 使用示例
 
@@ -450,7 +484,7 @@ python scripts/ssh_client.py shell \
 | Postpay | 按小时后付费 | 支持关机不收费 |
 | Day | 按天付费 | 中期使用 |
 | Month | 按月付费 | 长期稳定使用 |
-
+| Spot | 抢占式实例（内测） | 短期测试、临时任、不支持关机不收费 |
 ### 5. 实例状态说明
 | 状态 | 说明 | 可执行操作 |
 |------|------|------------|
